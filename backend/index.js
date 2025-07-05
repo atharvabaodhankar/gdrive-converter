@@ -61,9 +61,22 @@ async function setFilePublic(fileId) {
 }
 
 app.post('/upload', upload.single('file'), async (req, res) => {
-  const fileId = await uploadFile(req.file.path, req.file.originalname);
-  const publicUrl = await setFilePublic(fileId);
-  res.send(publicUrl);
+  try {
+    const fileId = await uploadFile(req.file.path, req.file.originalname);
+    if (!fileId) {
+      return res.status(500).json({ error: 'Failed to upload file to Google Drive.' });
+    }
+
+    const publicUrl = await setFilePublic(fileId);
+    if (!publicUrl) {
+      return res.status(500).json({ error: 'Failed to set file public.' });
+    }
+
+    res.json(publicUrl);
+  } catch (error) {
+    console.error('Error in upload endpoint:', error);
+    res.status(500).json({ error: 'Internal server error during file upload.' });
+  }
 });
 
 const PORT = process.env.PORT || 3001;

@@ -20,12 +20,16 @@ function App() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('http://localhost:3000/upload', {
+      const res = await fetch('http://localhost:3001/upload', {
         method: 'POST',
         body: formData,
       });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Unknown error');
+      }
       const data = await res.json();
-      setLink(data.link);
+      setLink(data.webViewLink || data.webContentLink);
     } catch (error) {
       console.error('Error uploading file:', error);
       alert('Error uploading file');
