@@ -1,11 +1,12 @@
 const { google } = require('googleapis');
 const readline = require('readline');
+require('dotenv').config();
 
 // Instructions:
 // 1. Fill in your CLIENT_ID, CLIENT_SECRET, and REDIRECT_URI from the Google Cloud Console.
-const CLIENT_ID = CLIENT_ID;
-const CLIENT_SECRET = CLIENT_SECRET;
-const REDIRECT_URI = REDIRECT_URI;
+const CLIENT_ID = process.env.GOOGLE_DRIVE_CLIENT_ID;
+const CLIENT_SECRET = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
+const REDIRECT_URI = process.env.GOOGLE_DRIVE_REDIRECT_URI;
 
 // 2. Run `node getRefreshToken.js` in your terminal.
 // 3. Open the generated URL in your browser.
