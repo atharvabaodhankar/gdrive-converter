@@ -23,12 +23,12 @@ const drive = google.drive({
   auth: oauth2Client,
 });
 
-async function uploadFile(filePath, fileName) {
+async function uploadFile(filePath, fileName, mimeType) {
   try {
     const response = await drive.files.create({
       requestBody: {
         name: fileName,
-        mimeType: req.file.mimetype,
+        mimeType: mimeType,
       },
       media: {
         body: fs.createReadStream(filePath),
@@ -64,7 +64,7 @@ async function setFilePublic(fileId) {
 
 app.post('/upload', upload.single('file'), async (req, res) => {
   try {
-    const fileId = await uploadFile(req.file.path, req.file.originalname);
+    const fileId = await uploadFile(req.file.path, req.file.originalname, req.file.mimetype);
     if (!fileId) {
       return res.status(500).json({ error: 'Failed to upload file to Google Drive.' });
     }
