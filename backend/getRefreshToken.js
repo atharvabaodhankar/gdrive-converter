@@ -3,9 +3,9 @@ const readline = require('readline');
 
 // Instructions:
 // 1. Fill in your CLIENT_ID, CLIENT_SECRET, and REDIRECT_URI from the Google Cloud Console.
-const CLIENT_ID = '679248887138-kalr7ihuu1vos5usgaj39dfafbaevipe.apps.googleusercontent.com'
-const CLIENT_SECRET = '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';
-const REDIRECT_URI = 'http://localhost:5173/oauth2callback';
+const CLIENT_ID = CLIENT_ID;
+const CLIENT_SECRET = CLIENT_SECRET;
+const REDIRECT_URI = REDIRECT_URI;
 
 // 2. Run `node getRefreshToken.js` in your terminal.
 // 3. Open the generated URL in your browser.
