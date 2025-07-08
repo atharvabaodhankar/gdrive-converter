@@ -28,7 +28,7 @@ async function uploadFile(filePath, fileName) {
     const response = await drive.files.create({
       requestBody: {
         name: fileName,
-        mimeType: 'auto',
+        mimeType: req.file.mimetype,
       },
       media: {
         body: fs.createReadStream(filePath),
@@ -36,7 +36,8 @@ async function uploadFile(filePath, fileName) {
     });
     return response.data.id;
   } catch (error) {
-    console.log(error.message);
+    console.error('Error uploading file to Google Drive:', error.message);
+    throw error; // Re-throw the error to be caught by the express route handler
   }
 }
 
@@ -56,7 +57,8 @@ async function setFilePublic(fileId) {
     });
     return result.data;
   } catch (error) {
-    console.log(error.message);
+    console.error('Error setting file public:', error.message);
+    throw error; // Re-throw the error to be caught by the express route handler
   }
 }
 
