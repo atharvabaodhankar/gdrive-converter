@@ -1,40 +1,76 @@
-const { google } = require('googleapis');
-const readline = require('readline');
-require('dotenv').config();
+// getRefreshToken.js
+// -------------------
+// Steps:
+// 1. Go to Google Cloud Console → APIs & Services → Credentials → Create OAuth 2.0 Client ID
+//    Set redirect URI = http://localhost:5173/oauth2callback
+// 2. Fill your .env with GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET, GOOGLE_DRIVE_REDIRECT_URI
+// 3. Run: node getRefreshToken.js
+// 4. Browser opens → sign in → grant access
+// 5. Terminal prints your refresh token → copy into .env
 
-// Instructions:
-// 1. Fill in your CLIENT_ID, CLIENT_SECRET, and REDIRECT_URI from the Google Cloud Console.
+require("dotenv").config();
+const http = require("http");
+const open = require("open");
+const { google } = require("googleapis");
+
 const CLIENT_ID = process.env.GOOGLE_DRIVE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
-const REDIRECT_URI = process.env.GOOGLE_DRIVE_REDIRECT_URI;
+const REDIRECT_URI = process.env.GOOGLE_DRIVE_REDIRECT_URI; // e.g. http://localhost:5173/oauth2callback
 
-// 2. Run `node getRefreshToken.js` in your terminal.
-// 3. Open the generated URL in your browser.
-// 4. Authorize the application.
-// 5. You will be redirected to a "This site can’t be reached" page. This is normal.
-// 6. Copy the *entire* URL from your browser's address bar.
-// 7. Paste the URL back into the terminal and press Enter.
-// 8. The script will print your Refresh Token. Copy it into your .env file.
+if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI) {
+  console.error("❌ Missing CLIENT_ID / CLIENT_SECRET / REDIRECT_URI in .env");
+  process.exit(1);
+}
 
 const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 
 const authUrl = oauth2Client.generateAuthUrl({
-  access_type: 'offline',
-  scope: ['https://www.googleapis.com/auth/drive.file'],
+  access_type: "offline",      // ensures refresh token is returned
+  prompt: "consent",           // forces consent screen → always gives refresh token
+  include_granted_scopes: true,
+  scope: ["https://www.googleapis.com/auth/drive.file"], // only file access
 });
 
-console.log('Authorize this app by visiting this url:', authUrl);
+console.log("\n➡️  If browser doesn’t open automatically, open this URL:\n", authUrl);
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
+// Local server to handle Google redirect
+const server = http.createServer(async (req, res) => {
+  if (!req.url.startsWith("/oauth2callback")) {
+    res.writeHead(404);
+    return res.end("Not found");
+  }
+
+  const url = new URL(req.url, REDIRECT_URI);
+  const code = url.searchParams.get("code");
+
+  if (!code) {
+    res.writeHead(400);
+    return res.end("Missing authorization code");
+  }
+
+  try {
+    const { tokens } = await oauth2Client.getToken(code);
+    console.log("\n✅ Your Refresh Token is:\n");
+    console.log(tokens.refresh_token);
+    console.log("\n👉 Copy this into your .env as GOOGLE_DRIVE_REFRESH_TOKEN");
+
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("Authentication successful. Check your terminal for the refresh token.");
+  } catch (err) {
+    console.error("❌ Error exchanging code for tokens:", err.response?.data || err);
+    res.writeHead(500);
+    res.end("Token exchange failed. See terminal.");
+  } finally {
+    server.close();
+    process.exit(0);
+  }
 });
 
-rl.question('Enter the URL you were redirected to: ', async (url) => {
-  const code = new URL(url).searchParams.get('code');
-  rl.close();
-  const { tokens } = await oauth2Client.getToken(code);
-  console.log('\nYour Refresh Token is:');
-  console.log(tokens.refresh_token);
-  console.log('\nCopy this into your .env file as GOOGLE_DRIVE_REFRESH_TOKEN');
+server.listen(5173, async () => {
+  console.log("\n🚀 Listening on http://localhost:5173 ...");
+  try {
+    await open(authUrl);
+  } catch {
+    console.log("⚠️ Could not auto-open browser. Please open the URL manually.");
+  }
 });
